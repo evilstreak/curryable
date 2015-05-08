@@ -52,8 +52,10 @@ class Curryable
     unknown_keywords = keywords.keys - required_keywords
 
     if unknown_keywords.any?
+      plural = unknown_keywords.length > 1 ? "s" : ""
+
       raise ArgumentError.new(
-        "unknown keyword: #{unknown_keywords.first}"
+        "unknown keyword#{plural}: #{unknown_keywords.join(", ")}"
       )
     end
 

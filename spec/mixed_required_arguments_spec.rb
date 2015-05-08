@@ -108,4 +108,17 @@ RSpec.describe "Mixed required arguments" do
       }.to raise_error(ArgumentError, "unknown keyword: e")
     end
   end
+
+  context "when multiple unknown keywords are provided" do
+    it "raises ArgumentError" do
+      expect {
+        curryable
+          .call(a, b, c: c)
+          .call(
+            e: "is an unknown keyword",
+            f: "so is f",
+          )
+      }.to raise_error(ArgumentError, "unknown keywords: e, f")
+    end
+  end
 end
