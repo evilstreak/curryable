@@ -47,9 +47,17 @@ class Curryable
       )
     end
 
-    keywords = possible_keywords.reduce(&:merge)
+    keywords = possible_keywords.reduce(&:merge) || {}
 
-    positional + [keywords].reject(&:nil?)
+    unknown_keywords = keywords.keys - required_keywords
+
+    if unknown_keywords.any?
+      raise ArgumentError.new(
+        "unknown keyword: #{unknown_keywords.first}"
+      )
+    end
+
+    positional + [keywords].reject(&:empty?)
   end
 
   def enough_positional_arguments?
