@@ -1,7 +1,7 @@
 require "spec_helper"
 require "curryable"
 
-RSpec.describe Curryable do
+RSpec.describe "Required keyword arguments" do
   class CommandClass
     def initialize(a:, b:, c:)
       @a = a
