@@ -23,8 +23,12 @@ RSpec.describe Curryable do
     Curryable.new(CommandClass)
   }
 
+  let(:return_value) { double(:return_value) }
+
   before do
     $command_spy = command_spy
+
+    allow(command_spy).to receive(:call).and_return(return_value)
   end
 
   context "when all arguments are provided in one call" do
@@ -33,6 +37,12 @@ RSpec.describe Curryable do
 
       expect(command_spy).to have_received(:call).with(a: a, b: b, c: c)
     end
+
+    it "returns the value returned by the command class" do
+      result = curryable.call(a: a, b: b, c: c)
+
+      expect(result).to be(return_value)
+    end
   end
 
   context "when some arguments are provided" do
@@ -40,6 +50,30 @@ RSpec.describe Curryable do
       curryable.call(a: a)
 
       expect(command_spy).not_to have_received(:call)
+    end
+
+    it "returns a Curryable" do
+      expect(
+        curryable.call(a: a)
+      ).to be_a(Curryable)
+    end
+  end
+
+  context "when arguments are provided in more than one call" do
+    it "executes once with all arguments" do
+      curryable
+        .call(a: a)
+        .call(b: b, c: c)
+
+      expect(command_spy).to have_received(:call).with(a: a, b: b, c: c)
+    end
+
+    it "returns the value returned by the command class" do
+      result = curryable
+        .call(a: a)
+        .call(b: b, c: c)
+
+      expect(result).to be(return_value)
     end
   end
 end
