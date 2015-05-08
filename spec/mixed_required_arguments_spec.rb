@@ -80,4 +80,12 @@ RSpec.describe "Mixed required arguments" do
       expect(result).to be(return_value)
     end
   end
+
+  context "when too many positional arguments are provided" do
+    it "raises ArgumentError" do
+      expect {
+        curryable.call(a, b, c)
+      }.to raise_error(ArgumentError, "wrong number of arguments (3 for 2)")
+    end
+  end
 end

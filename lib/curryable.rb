@@ -36,7 +36,18 @@ class Curryable
     combined = arguments + new_arguments
 
     positional = combined.take(arity)
-    keywords = combined.drop(arity).reduce(&:merge)
+
+    possible_keywords = combined.drop(arity)
+
+    unless possible_keywords.all? { |arg| arg.is_a?(Hash) }
+      excess_arg_count = combined.length
+
+      raise ArgumentError.new(
+        "wrong number of arguments (#{excess_arg_count} for #{arity})"
+      )
+    end
+
+    keywords = possible_keywords.reduce(&:merge)
 
     positional + [keywords].reject(&:nil?)
   end
