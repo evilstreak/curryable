@@ -33,9 +33,12 @@ class Curryable
   private
 
   def combined_arguments(new_arguments)
-    enough_positional_arguments? ?
-      arguments.take(arity) + [provided_keyword_arguments.merge(new_arguments.first)] :
-      arguments + new_arguments
+    combined = arguments + new_arguments
+
+    positional = combined.take(arity)
+    keywords = combined.drop(arity).reduce(&:merge)
+
+    positional + [keywords].reject(&:nil?)
   end
 
   def enough_positional_arguments?
