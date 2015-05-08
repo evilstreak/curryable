@@ -1,5 +1,5 @@
 class Curryable
-  def initialize(command_class, **arguments)
+  def initialize(command_class, *arguments)
     @command_class = command_class
     @arguments = arguments
   end
@@ -7,9 +7,9 @@ class Curryable
   attr_reader :command_class, :arguments
   private     :command_class, :arguments
 
-  def call(**new_arguments)
-    combined_arguments = arguments.merge(new_arguments)
-    curryable = self.class.new(command_class, combined_arguments)
+  def call(*new_arguments)
+    combined_arguments = arguments + new_arguments
+    curryable = self.class.new(command_class, *combined_arguments)
 
     if curryable.enough_arguments?
       curryable.execute
@@ -21,17 +21,25 @@ class Curryable
   protected
 
   def enough_arguments?
-    provided_keywords & required_keywords == required_keywords
+    if arity > 0
+      arguments.length == arity
+    else
+      provided_keywords & required_keywords == required_keywords
+    end
   end
 
   def execute
-    command_class.new(arguments).call
+    command_class.new(*arguments).call
   end
 
   private
 
+  def arity
+    parameters.length
+  end
+
   def provided_keywords
-    arguments.keys
+    arguments.first.keys
   end
 
   def required_keywords
