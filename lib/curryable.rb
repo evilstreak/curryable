@@ -8,8 +8,10 @@ class Curryable
   private     :command_class, :arguments
 
   def call(*new_arguments)
-    combined_arguments = arguments + new_arguments
-    curryable = self.class.new(command_class, *combined_arguments)
+    curryable = self.class.new(
+      command_class,
+      *combined_arguments(new_arguments)
+    )
 
     if curryable.enough_arguments?
       curryable.execute
@@ -21,11 +23,7 @@ class Curryable
   protected
 
   def enough_arguments?
-    if arity > 0
-      arguments.length == arity
-    else
-      provided_keywords & required_keywords == required_keywords
-    end
+    enough_positional_arguments? && enough_keyword_arguments?
   end
 
   def execute
@@ -34,16 +32,36 @@ class Curryable
 
   private
 
-  def arity
-    parameters.length
+  def combined_arguments(new_arguments)
+    enough_positional_arguments? ?
+      arguments.take(arity) + [provided_keyword_arguments.merge(new_arguments.first)] :
+      arguments + new_arguments
+  end
+
+  def enough_positional_arguments?
+    arguments.length >= arity
+  end
+
+  def enough_keyword_arguments?
+    provided_keywords & required_keywords == required_keywords
   end
 
   def provided_keywords
-    arguments.first.keys
+    provided_keyword_arguments.keys
+  end
+
+  def provided_keyword_arguments
+    arguments.drop(arity).fetch(0, {})
   end
 
   def required_keywords
-    parameters.map { |(_type, name)| name }
+    parameters
+      .select { |(type, _name)| type == :keyreq }
+      .map { |(_type, name)| name }
+  end
+
+  def arity
+    parameters.count { |(type, _name)| type == :req }
   end
 
   def parameters
