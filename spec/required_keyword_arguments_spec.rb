@@ -2,7 +2,7 @@ require "spec_helper"
 require "curryable"
 
 RSpec.describe "Required keyword arguments" do
-  class CommandClass
+  class RequiredKeywordCommandClass
     def initialize(a:, b:, c:)
       @a = a
       @b = b
@@ -20,7 +20,7 @@ RSpec.describe "Required keyword arguments" do
   let(:command_spy) { spy }
 
   subject(:curryable) {
-    Curryable.new(CommandClass)
+    Curryable.new(RequiredKeywordCommandClass)
   }
 
   let(:return_value) { double(:return_value) }
