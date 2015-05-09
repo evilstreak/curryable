@@ -6,8 +6,8 @@ require 'curryable/version'
 Gem::Specification.new do |spec|
   spec.name          = "curryable"
   spec.version       = Curryable::VERSION
-  spec.authors       = ["Stephen Best", "Dominic Baggot"]
-  spec.email         = ["bestie@gmail.com", "dominic.baggot@gmail.com"]
+  spec.authors       = ["Stephen Best", "Dominic Baggott"]
+  spec.email         = ["bestie@gmail.com", "dominic.baggott@gmail.com"]
 
   spec.summary       = %q{Enables immutable command objects to act as currable functions}
   spec.homepage      = "https://github.com/evilstreak/curryable"
