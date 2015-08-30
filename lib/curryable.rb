@@ -2,9 +2,10 @@ require "curryable/parameter_list"
 require "curryable/argument_list"
 
 class Curryable
-  def initialize(command_class, *arguments)
+  # TODO we could pass an ArgumentList instead of a splat here
+  def initialize(command_class, arguments = nil)
     @command_class = command_class
-    @arguments = arguments
+    @arguments = arguments || default_argument_list
   end
 
   attr_reader :command_class, :arguments
@@ -13,7 +14,7 @@ class Curryable
   def call(*new_arguments)
     curryable = self.class.new(
       command_class,
-      *combined_arguments(new_arguments)
+      arguments + new_arguments,
     )
 
     if curryable.arguments_fulfilled?
@@ -40,17 +41,17 @@ class Curryable
   protected
 
   def arguments_fulfilled?
-    better_arguments.fulfilled?
+    arguments.fulfilled?
   end
 
   def execute
-    command_class.new(*arguments).call
+    command_class.new(*arguments.primitive).call
   end
 
   private
 
   def arguments_for_inspection
-    better_arguments.map(&:to_s).join(", ")
+    arguments.map(&:to_s).join(", ")
   end
 
   def positional_parameter_names
@@ -59,36 +60,6 @@ class Curryable
 
   def positional_parameters
     parameters.positional
-  end
-
-  def combined_arguments(new_arguments)
-    combined = arguments + new_arguments
-
-    positional = combined.take(arity)
-
-    possible_keywords = combined.drop(arity)
-
-    unless possible_keywords.all? { |arg| arg.is_a?(Hash) }
-      excess_arg_count = combined.length
-
-      raise ArgumentError.new(
-        "wrong number of arguments (#{excess_arg_count} for #{arity})"
-      )
-    end
-
-    keywords = possible_keywords.reduce(&:merge) || {}
-
-    unknown_keywords = keywords.keys - required_keywords
-
-    if unknown_keywords.any?
-      plural = unknown_keywords.length > 1 ? "s" : ""
-
-      raise ArgumentError.new(
-        "unknown keyword#{plural}: #{unknown_keywords.join(", ")}"
-      )
-    end
-
-    positional + [keywords].reject(&:empty?)
   end
 
   def required_keywords
@@ -103,7 +74,7 @@ class Curryable
     ParameterList.new(command_class.instance_method(:initialize).parameters)
   end
 
-  def better_arguments
-    ArgumentList.new(parameters, arguments)
+  def default_argument_list
+    ArgumentList.new(parameters, [])
   end
 end

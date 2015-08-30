@@ -8,9 +8,15 @@ class Curryable
     attr_reader :parameters, :arguments
     private     :parameters, :arguments
 
+    # TODO Reevaluate this. (says @bestie)
     include Enumerable
     def each(&block)
       (positional + keyword).each(&block)
+    end
+
+    # TODO This probably needs looking at too.
+    def primitive
+      @arguments
     end
 
     def positional
@@ -38,11 +44,38 @@ class Curryable
       all?(&:fulfilled?)
     end
 
-    # def outstanding
-    # end
-    #
-    # def provided
-    # end
+    def +(new_values)
+      combined = primitive + new_values
+
+      positional = combined.take(parameters.arity)
+
+      possible_keywords = combined.drop(parameters.arity)
+
+      unless possible_keywords.all? { |arg| arg.is_a?(Hash) }
+        excess_arg_count = combined.length
+
+        raise ArgumentError.new(
+          "wrong number of arguments (#{excess_arg_count} for #{parameters.arity})"
+        )
+      end
+
+      keywords = possible_keywords.reduce(&:merge) || {}
+
+      unknown_keywords = keywords.keys - parameters.required_keywords.map(&:name)
+
+      if unknown_keywords.any?
+        plural = unknown_keywords.length > 1 ? "s" : ""
+
+        raise ArgumentError.new(
+          "unknown keyword#{plural}: #{unknown_keywords.join(", ")}"
+        )
+      end
+
+      self.class.new(
+        parameters,
+        positional + [keywords].reject(&:empty?),
+      )
+    end
 
     private
 
