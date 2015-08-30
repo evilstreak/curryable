@@ -67,9 +67,17 @@ class Curryable
   end
 
   def keyword_parameters_for_inspection
-    required_keywords.zip(provided_keywords).map { |tuple|
-      tuple.join(":")
-    }.join(", ")
+    required_keywords
+      .map { |name|
+        [
+          name,
+          provided_keyword_arguments.fetch(name, SweetNothing.new)
+        ]
+      }
+      .map { |name, value|
+        "#{name.to_s}:#{value.inspect}"
+      }
+      .join(", ")
   end
 
   def positional_parameter_names

@@ -81,7 +81,33 @@ RSpec.describe "Mixed required arguments" do
     end
   end
 
-  context "when arguments are provided in more than one call" do
+  context "when some arguments are provided in more than one call" do
+    subject(:partially_curried) {
+      curryable
+        .call(a)
+        .call(b, c: c)
+    }
+
+    it "does not execute the #call method of the command class" do
+      partially_curried
+
+      expect(command_spy).not_to have_received(:call)
+    end
+
+    it "returns a Curryable" do
+      expect(
+        partially_curried
+      ).to be_a(Curryable)
+    end
+
+    it "can be inspected to show which arguments have been provided and their values" do
+      expect(partially_curried.inspect).to match(
+        %r{#<Curryable<Curryable::TestClasses::MixedRequiredCommandClass>:0x[0-9a-f]{12} a=#<RSpec::Mocks::Double:0x[0-9a-f]{12} @name=:a>, b=#<RSpec::Mocks::Double:0x[0-9a-f]{12} @name=:b>, c:#<RSpec::Mocks::Double:0x[0-9a-f]{12} @name=:c>, d:>}
+      )
+    end
+  end
+
+  context "when all arguments are provided in more than one call" do
     it "executes once with all arguments" do
       curryable
         .call(a)
