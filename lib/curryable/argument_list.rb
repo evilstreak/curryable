@@ -1,12 +1,15 @@
 class Curryable
   class ArgumentList
-    def initialize(parameters, arguments)
+    def initialize(parameters, primitive_list)
       @parameters = parameters
-      @arguments = arguments
+      check_positional_within_arity(primitive_list)
+      @positional = extract_positional(primitive_list)
+      check_for_unknown_keywords(primitive_list)
+      @keyword = extract_keyword(primitive_list)
     end
 
-    attr_reader :parameters, :arguments
-    private     :parameters, :arguments
+    attr_reader :parameters, :keyword, :positional
+    private     :parameters, :keyword, :positional
 
     # TODO Reevaluate this. (says @bestie)
     include Enumerable
@@ -15,19 +18,22 @@ class Curryable
     end
 
     # TODO This probably needs looking at too.
-    def primitive
-      @arguments
+    def primitives
+      positional.select(&:fulfilled?).map(&:value) +
+        [Hash[keyword.select(&:fulfilled?).map { |p| [ p.name, p.value ] }]].reject(&:empty?)
     end
 
-    def positional
+    def extract_positional(primitives)
       nothings = [nothing] * parameters.arity
 
-      parameters.positional.zip(arguments + nothings).map { |parameter, value|
-        PositionalArgument.new(parameter, value)
+      parameters.positional.map.with_index { |parameter, i|
+        PositionalArgument.new(parameter, primitives.fetch(i, nothing))
       }
     end
 
-    def keyword
+    def extract_keyword(primitives)
+      provided_keyword_arguments  = primitives.drop(parameters.arity).fetch(0, {})
+
       parameters.required_keywords.map { |parameter|
         KeywordArgument.new(
           parameter,
@@ -36,33 +42,42 @@ class Curryable
       }
     end
 
-    def provided_keyword_arguments
-      arguments.drop(parameters.arity).fetch(0, {})
-    end
-
     def fulfilled?
       all?(&:fulfilled?)
     end
 
     def +(new_values)
-      combined = primitive + new_values
-
-      positional = combined.take(parameters.arity)
-
-      possible_keywords = combined.drop(parameters.arity)
-
-      unless possible_keywords.all? { |arg| arg.is_a?(Hash) }
-        excess_arg_count = combined.length
-
-        raise ArgumentError.new(
-          "wrong number of arguments (#{excess_arg_count} for #{parameters.arity})"
-        )
+      if keyword.any?(&:fulfilled?) && new_values.map(&:class) == [Hash]
+        combined = primitives.take(parameters.arity) +
+          [
+            primitives.drop(parameters.arity).fetch(0, {}).merge(new_values.first)
+          ]
+      else
+        combined = primitives + new_values
       end
 
-      keywords = possible_keywords.reduce(&:merge) || {}
+      self.class.new(parameters, combined)
+    end
 
-      unknown_keywords = keywords.keys - parameters.required_keywords.map(&:name)
+    private
 
+    def nothing
+      @nothing ||= SweetNothing.new
+    end
+
+    def check_positional_within_arity(primitives)
+      possible_keywords = primitives.drop(parameters.arity)
+
+      unless possible_keywords.empty? || possible_keywords.map(&:class) == [Hash]
+        raise ArgumentError.new(
+          "wrong number of arguments (#{primitives.length} for #{parameters.arity})"
+        )
+      end
+    end
+
+    def check_for_unknown_keywords(primitives)
+      given_keywords = primitives.drop(parameters.arity).fetch(0, {}).keys
+      unknown_keywords = given_keywords - parameters.required_keywords.map(&:name)
       if unknown_keywords.any?
         plural = unknown_keywords.length > 1 ? "s" : ""
 
@@ -70,17 +85,6 @@ class Curryable
           "unknown keyword#{plural}: #{unknown_keywords.join(", ")}"
         )
       end
-
-      self.class.new(
-        parameters,
-        positional + [keywords].reject(&:empty?),
-      )
-    end
-
-    private
-
-    def nothing
-      @nothing ||= SweetNothing.new
     end
 
     class SweetNothing
