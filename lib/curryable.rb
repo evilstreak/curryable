@@ -47,37 +47,7 @@ class Curryable
   private
 
   def parameters_for_inspection
-    [
-      positional_parameters_for_inspection,
-      keyword_parameters_for_inspection,
-    ].reject(&:empty?).join(", ")
-  end
-
-  class SweetNothing
-    def inspect
-      ""
-    end
-  end
-
-  def positional_parameters_for_inspection
-    nothings = [SweetNothing.new] * positional_parameters.length
-    positional_parameter_names.zip(arguments + nothings).map { |name, value|
-      "#{name.to_s}=#{value.inspect}"
-    }.join(", ")
-  end
-
-  def keyword_parameters_for_inspection
-    required_keywords
-      .map { |name|
-        [
-          name,
-          provided_keyword_arguments.fetch(name, SweetNothing.new)
-        ]
-      }
-      .map { |name, value|
-        "#{name.to_s}:#{value.inspect}"
-      }
-      .join(", ")
+    parameters_with_values.map(&:to_s).join(", ")
   end
 
   def positional_parameter_names
@@ -144,6 +114,93 @@ class Curryable
 
   def parameters
     ParameterList.new(command_class.instance_method(:initialize).parameters)
+  end
+
+  def parameters_with_values
+    ParametersWithValues.new(parameters, arguments)
+  end
+
+  class ParametersWithValues
+    def initialize(parameters, arguments)
+      @parameters = parameters
+      @arguments = arguments
+    end
+
+    attr_reader :parameters, :arguments
+    private     :parameters, :arguments
+
+    include Enumerable
+    def each(&block)
+      (positional + keyword).each(&block)
+    end
+
+    def positional
+      nothings = [nothing] * parameters.arity
+
+      parameters.positional.zip(arguments + nothings).map { |parameter, value|
+        PositionalParameterWithValue.new(parameter, value)
+      }
+    end
+
+    def keyword
+      parameters.required_keywords.map { |parameter|
+        KeywordParameterWithValue.new(
+          parameter,
+          provided_keyword_arguments.fetch(parameter.name, nothing)
+        )
+      }
+    end
+
+    def provided_keyword_arguments
+      arguments.drop(parameters.arity).fetch(0, {})
+    end
+
+    # def satisfied?
+    # end
+    #
+    # def outstanding
+    # end
+    #
+    # def provided
+    # end
+
+    private
+
+    def nothing
+      @nothing ||= SweetNothing.new
+    end
+
+    class SweetNothing
+      def inspect
+        ""
+      end
+    end
+  end
+
+  class ParameterWithValue
+    def initialize(parameter, value)
+      @parameter = parameter
+      @value = value
+    end
+
+    attr_reader :parameter, :value
+    private     :parameter
+
+    def name
+      parameter.name
+    end
+  end
+
+  class PositionalParameterWithValue < ParameterWithValue
+    def to_s
+      "#{name}=#{value.inspect}"
+    end
+  end
+
+  class KeywordParameterWithValue < ParameterWithValue
+    def to_s
+      "#{name}:#{value.inspect}"
+    end
   end
 
   class ParameterList
