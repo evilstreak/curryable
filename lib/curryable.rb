@@ -53,9 +53,16 @@ class Curryable
     ].join(", ")
   end
 
+  class SweetNothing
+    def inspect
+      ""
+    end
+  end
+
   def positional_parameters_for_inspection
-    positional_parameter_names.zip(arguments).map { |tuple|
-      tuple.join("=")
+    nothings = [SweetNothing.new] * positional_parameters.length
+    positional_parameter_names.zip(arguments + nothings).map { |name, value|
+      "#{name.to_s}=#{value.inspect}"
     }.join(", ")
   end
 
