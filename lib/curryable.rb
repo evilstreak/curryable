@@ -25,17 +25,11 @@ class Curryable
   end
 
   def inspect
-    [
-      "#<Curryable",
-      "<",
-      command_class.name,
-      ">",
-      ":0x",
-      object_id.<<(1).to_s(16),
-      " ",
-      arguments_for_inspection,
-      ">",
-    ].join
+    "#<Curryable<%{command_class}>:0x%{hex_object_id} %{arguments}>" % {
+      command_class: command_class.name,
+      hex_object_id: object_id.<<(1).to_s(16),
+      arguments: arguments.map(&:to_s).join(", "),
+    }
   end
 
   protected
@@ -49,10 +43,6 @@ class Curryable
   end
 
   private
-
-  def arguments_for_inspection
-    arguments.map(&:to_s).join(", ")
-  end
 
   def positional_parameter_names
     positional_parameters.map(&:name)
