@@ -50,7 +50,7 @@ class Curryable
     [
       positional_parameters_for_inspection,
       keyword_parameters_for_inspection,
-    ].join(", ")
+    ].reject(&:empty?).join(", ")
   end
 
   class SweetNothing

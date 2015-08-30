@@ -2,7 +2,7 @@ require "spec_helper"
 require "curryable"
 
 RSpec.describe "Mixed required arguments" do
-  module ::Curryable::TestClasses
+  module Curryable::TestClasses
     class MixedRequiredCommandClass
       def initialize(a, b, c:, d:)
         @a = a

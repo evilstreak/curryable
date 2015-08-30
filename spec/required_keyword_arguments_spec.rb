@@ -2,15 +2,17 @@ require "spec_helper"
 require "curryable"
 
 RSpec.describe "Required keyword arguments" do
-  class RequiredKeywordCommandClass
-    def initialize(a:, b:, c:)
-      @a = a
-      @b = b
-      @c = c
-    end
+  module Curryable::TestClasses
+    class RequiredKeywordCommandClass
+      def initialize(a:, b:, c:)
+        @a = a
+        @b = b
+        @c = c
+      end
 
-    def call
-      $command_spy.call(a: @a, b: @b, c: @c)
+      def call
+        $command_spy.call(a: @a, b: @b, c: @c)
+      end
     end
   end
 
@@ -20,7 +22,7 @@ RSpec.describe "Required keyword arguments" do
   let(:command_spy) { spy }
 
   subject(:curryable) {
-    Curryable.new(RequiredKeywordCommandClass)
+    Curryable.new(Curryable::TestClasses::RequiredKeywordCommandClass)
   }
 
   let(:return_value) { double(:return_value) }
@@ -29,6 +31,14 @@ RSpec.describe "Required keyword arguments" do
     $command_spy = command_spy
 
     allow(command_spy).to receive(:call).and_return(return_value)
+  end
+
+  context "when no arguments are provided" do
+    it "can be inspected to show all arguments that must be provided" do
+      expect(curryable.inspect).to match(
+        %r{#<Curryable<Curryable::TestClasses::RequiredKeywordCommandClass>:0x[0-9a-f]{12} a:, b:, c:>}
+      )
+    end
   end
 
   context "when all arguments are provided in one call" do
@@ -46,16 +56,24 @@ RSpec.describe "Required keyword arguments" do
   end
 
   context "when some arguments are provided" do
+    subject(:partially_curried) {
+      curryable.call(b: b)
+    }
+
     it "does not execute the #call method of the command class" do
-      curryable.call(a: a)
+      partially_curried
 
       expect(command_spy).not_to have_received(:call)
     end
 
     it "returns a Curryable" do
-      expect(
-        curryable.call(a: a)
-      ).to be_a(Curryable)
+      expect(partially_curried).to be_a(Curryable)
+    end
+
+    it "can be inspected to show which arguments have been provided and their values" do
+      expect(partially_curried.inspect).to match(
+        %r{#<Curryable<Curryable::TestClasses::RequiredKeywordCommandClass>:0x[0-9a-f]{12} a:, b:#<RSpec::Mocks::Double:0x[0-9a-f]{12} @name=:b>, c:>}
+      )
     end
   end
 
