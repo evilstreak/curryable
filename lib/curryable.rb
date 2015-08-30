@@ -1,3 +1,6 @@
+require "curryable/parameter_list"
+require "curryable/argument_list"
+
 class Curryable
   def initialize(command_class, *arguments)
     @command_class = command_class
@@ -29,7 +32,7 @@ class Curryable
       ":0x",
       object_id.<<(1).to_s(16),
       " ",
-      parameters_for_inspection,
+      arguments_for_inspection,
       ">",
     ].join
   end
@@ -46,8 +49,8 @@ class Curryable
 
   private
 
-  def parameters_for_inspection
-    parameters_with_values.map(&:to_s).join(", ")
+  def arguments_for_inspection
+    better_arguments.map(&:to_s).join(", ")
   end
 
   def positional_parameter_names
@@ -116,139 +119,7 @@ class Curryable
     ParameterList.new(command_class.instance_method(:initialize).parameters)
   end
 
-  def parameters_with_values
-    ParametersWithValues.new(parameters, arguments)
-  end
-
-  class ParametersWithValues
-    def initialize(parameters, arguments)
-      @parameters = parameters
-      @arguments = arguments
-    end
-
-    attr_reader :parameters, :arguments
-    private     :parameters, :arguments
-
-    include Enumerable
-    def each(&block)
-      (positional + keyword).each(&block)
-    end
-
-    def positional
-      nothings = [nothing] * parameters.arity
-
-      parameters.positional.zip(arguments + nothings).map { |parameter, value|
-        PositionalParameterWithValue.new(parameter, value)
-      }
-    end
-
-    def keyword
-      parameters.required_keywords.map { |parameter|
-        KeywordParameterWithValue.new(
-          parameter,
-          provided_keyword_arguments.fetch(parameter.name, nothing)
-        )
-      }
-    end
-
-    def provided_keyword_arguments
-      arguments.drop(parameters.arity).fetch(0, {})
-    end
-
-    # def satisfied?
-    # end
-    #
-    # def outstanding
-    # end
-    #
-    # def provided
-    # end
-
-    private
-
-    def nothing
-      @nothing ||= SweetNothing.new
-    end
-
-    class SweetNothing
-      def inspect
-        ""
-      end
-    end
-  end
-
-  class ParameterWithValue
-    def initialize(parameter, value)
-      @parameter = parameter
-      @value = value
-    end
-
-    attr_reader :parameter, :value
-    private     :parameter
-
-    def name
-      parameter.name
-    end
-  end
-
-  class PositionalParameterWithValue < ParameterWithValue
-    def to_s
-      "#{name}=#{value.inspect}"
-    end
-  end
-
-  class KeywordParameterWithValue < ParameterWithValue
-    def to_s
-      "#{name}:#{value.inspect}"
-    end
-  end
-
-  class ParameterList
-    def initialize(list)
-      @raw_list = list
-    end
-
-    def arity
-      required_positional.count
-    end
-
-    def positional
-      list.select(&:positional?)
-    end
-
-    def required_positional
-      positional.select(&:required?)
-    end
-
-    def required_keywords
-      list.select(&:keyword?).select(&:required?)
-    end
-
-    private
-
-    def list
-      @list ||= @raw_list.map { |type, name| Parameter.new(type, name) }
-    end
-
-    class Parameter
-      def initialize(type, name)
-        @type = type
-        @name = name
-      end
-
-      attr_reader :type, :name
-
-      def required?
-        type == :req || type == :keyreq
-      end
-
-      def positional?
-        type == :req
-      end
-
-      def keyword?
-        type == :keyreq
-      end
-    end
+  def better_arguments
+    ArgumentList.new(parameters, arguments)
   end
 end
