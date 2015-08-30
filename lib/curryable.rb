@@ -91,14 +91,6 @@ class Curryable
     positional + [keywords].reject(&:empty?)
   end
 
-  def provided_keywords
-    provided_keyword_arguments.keys
-  end
-
-  def provided_keyword_arguments
-    arguments.drop(arity).fetch(0, {})
-  end
-
   def required_keywords
     parameters.required_keywords.map(&:name)
   end
