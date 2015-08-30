@@ -81,11 +81,11 @@ class Curryable
   end
 
   def positional_parameter_names
-    positional_parameters.map(&:last)
+    positional_parameters.map(&:name)
   end
 
   def positional_parameters
-    parameters.select { |(type, _name)| type == :req }
+    parameters.positional
   end
 
   def combined_arguments(new_arguments)
@@ -135,16 +135,63 @@ class Curryable
   end
 
   def required_keywords
-    parameters
-      .select { |(type, _name)| type == :keyreq }
-      .map { |(_type, name)| name }
+    parameters.required_keywords.map(&:name)
   end
 
   def arity
-    parameters.count { |(type, _name)| type == :req }
+    parameters.arity
   end
 
   def parameters
-    command_class.instance_method(:initialize).parameters
+    ParameterList.new(command_class.instance_method(:initialize).parameters)
+  end
+
+  class ParameterList
+    def initialize(list)
+      @raw_list = list
+    end
+
+    def arity
+      required_positional.count
+    end
+
+    def positional
+      list.select(&:positional?)
+    end
+
+    def required_positional
+      positional.select(&:required?)
+    end
+
+    def required_keywords
+      list.select(&:keyword?).select(&:required?)
+    end
+
+    private
+
+    def list
+      @list ||= @raw_list.map { |type, name| Parameter.new(type, name) }
+    end
+
+    class Parameter
+      def initialize(type, name)
+        @type = type
+        @name = name
+      end
+
+      attr_reader :type, :name
+
+      def required?
+        type == :req || type == :keyreq
+      end
+
+      def positional?
+        type == :req
+      end
+
+      def keyword?
+        type == :keyreq
+      end
+    end
   end
 end
