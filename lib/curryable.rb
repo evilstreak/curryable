@@ -20,6 +20,20 @@ class Curryable
     end
   end
 
+  def inspect
+    [
+      "#<Curryable",
+      "<",
+      command_class.name,
+      ">",
+      ":0x",
+      object_id.<<(1).to_s(16),
+      " ",
+      parameters_for_inspection,
+      ">",
+    ].join
+  end
+
   protected
 
   def enough_arguments?
@@ -31,6 +45,33 @@ class Curryable
   end
 
   private
+
+  def parameters_for_inspection
+    [
+      positional_parameters_for_inspection,
+      keyword_parameters_for_inspection,
+    ].join(", ")
+  end
+
+  def positional_parameters_for_inspection
+    positional_parameter_names.zip(arguments).map { |tuple|
+      tuple.join("=")
+    }.join(", ")
+  end
+
+  def keyword_parameters_for_inspection
+    required_keywords.zip(provided_keywords).map { |tuple|
+      tuple.join(":")
+    }.join(", ")
+  end
+
+  def positional_parameter_names
+    positional_parameters.map(&:last)
+  end
+
+  def positional_parameters
+    parameters.select { |(type, _name)| type == :req }
+  end
 
   def combined_arguments(new_arguments)
     combined = arguments + new_arguments

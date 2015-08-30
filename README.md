@@ -40,7 +40,7 @@ signup_service = Curryable.new(SignUpUser).call(
 )
 
 signup_service.inspect
-# => <# Curryable<SignUpUser> user_creator=User, email_api=<#EmailAPI>, crm_api=<#CRMAPI>, attributes=>
+# => #<Curryable<SignUpUser>:0x839fa96b9467e0 user_creator:User, email_api:#<EmailAPI>, crm_api:#<CRMAPI>, attributes:>
 
 signup_service.call(
   attributes: user_attrs,

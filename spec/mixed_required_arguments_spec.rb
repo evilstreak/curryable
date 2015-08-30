@@ -2,16 +2,18 @@ require "spec_helper"
 require "curryable"
 
 RSpec.describe "Mixed required arguments" do
-  class MixedRequiredCommandClass
-    def initialize(a, b, c:, d:)
-      @a = a
-      @b = b
-      @c = c
-      @d = d
-    end
+  module ::Curryable::TestClasses
+    class MixedRequiredCommandClass
+      def initialize(a, b, c:, d:)
+        @a = a
+        @b = b
+        @c = c
+        @d = d
+      end
 
-    def call
-      $command_spy.call(a: @a, b: @b, c: @c, d: @d)
+      def call
+        $command_spy.call(a: @a, b: @b, c: @c, d: @d)
+      end
     end
   end
 
@@ -22,7 +24,7 @@ RSpec.describe "Mixed required arguments" do
   let(:command_spy) { spy }
 
   subject(:curryable) {
-    Curryable.new(MixedRequiredCommandClass)
+    Curryable.new(Curryable::TestClasses::MixedRequiredCommandClass)
   }
 
   let(:return_value) { double(:return_value) }
@@ -31,6 +33,14 @@ RSpec.describe "Mixed required arguments" do
     $command_spy = command_spy
 
     allow(command_spy).to receive(:call).and_return(return_value)
+  end
+
+  context "when no arguments are provided" do
+    it "can be inspected to show all arguments that must be provided" do
+      expect(curryable.inspect).to match(
+        %r{#<Curryable<Curryable::TestClasses::MixedRequiredCommandClass>:0x[0-9a-f]{12} a=, b=, c:, d:>}
+      )
+    end
   end
 
   context "when all arguments are provided in one call" do
