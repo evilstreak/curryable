@@ -39,7 +39,7 @@ class Curryable
   end
 
   def execute
-    command_class.new(*arguments.primitive).call
+    command_class.new(*arguments.primitives).call
   end
 
   private
