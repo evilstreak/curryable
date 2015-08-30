@@ -34,9 +34,10 @@ class Curryable
       arguments.drop(parameters.arity).fetch(0, {})
     end
 
-    # def satisfied?
-    # end
-    #
+    def fulfilled?
+      all?(&:fulfilled?)
+    end
+
     # def outstanding
     # end
     #
@@ -66,6 +67,10 @@ class Curryable
 
       def name
         parameter.name
+      end
+
+      def fulfilled?
+        !(SweetNothing === value)
       end
     end
 

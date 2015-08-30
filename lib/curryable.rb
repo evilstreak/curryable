@@ -16,7 +16,7 @@ class Curryable
       *combined_arguments(new_arguments)
     )
 
-    if curryable.enough_arguments?
+    if curryable.arguments_fulfilled?
       curryable.execute
     else
       curryable
@@ -39,8 +39,8 @@ class Curryable
 
   protected
 
-  def enough_arguments?
-    enough_positional_arguments? && enough_keyword_arguments?
+  def arguments_fulfilled?
+    better_arguments.fulfilled?
   end
 
   def execute
@@ -89,14 +89,6 @@ class Curryable
     end
 
     positional + [keywords].reject(&:empty?)
-  end
-
-  def enough_positional_arguments?
-    arguments.length >= arity
-  end
-
-  def enough_keyword_arguments?
-    provided_keywords & required_keywords == required_keywords
   end
 
   def provided_keywords
