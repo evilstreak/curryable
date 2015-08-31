@@ -2,7 +2,6 @@ require "curryable/parameter_list"
 require "curryable/argument_list"
 
 class Curryable
-  # TODO we could pass an ArgumentList instead of a splat here
   def initialize(command_class, arguments = nil)
     @command_class = command_class
     @arguments = arguments || default_argument_list
@@ -52,22 +51,6 @@ class Curryable
 
   def arguments_for_inspection
     arguments.map(&:to_s).join(", ")
-  end
-
-  def positional_parameter_names
-    positional_parameters.map(&:name)
-  end
-
-  def positional_parameters
-    parameters.positional
-  end
-
-  def required_keywords
-    parameters.required_keywords.map(&:name)
-  end
-
-  def arity
-    parameters.arity
   end
 
   def parameters
