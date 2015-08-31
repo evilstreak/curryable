@@ -2,10 +2,14 @@ class Curryable
   class ArgumentList
     def initialize(parameters, primitive_list)
       @parameters = parameters
-      check_positional_within_arity(primitive_list)
-      @positional = extract_positional(primitive_list)
-      check_for_unknown_keywords(primitive_list)
-      @keyword = extract_keyword(primitive_list)
+
+      pos, key = split_primitives(primitive_list)
+
+      check_positional_within_arity(pos)
+      check_for_unknown_keywords(key)
+
+      @positional = extract_positional(pos)
+      @keyword = extract_keyword(key)
     end
 
     attr_reader :parameters, :keyword, :positional
@@ -24,20 +28,16 @@ class Curryable
     end
 
     def extract_positional(primitives)
-      nothings = [nothing] * parameters.arity
-
       parameters.positional.map.with_index { |parameter, i|
         PositionalArgument.new(parameter, primitives.fetch(i, nothing))
       }
     end
 
     def extract_keyword(primitives)
-      provided_keyword_arguments  = primitives.drop(parameters.arity).fetch(0, {})
-
       parameters.required_keywords.map { |parameter|
         KeywordArgument.new(
           parameter,
-          provided_keyword_arguments.fetch(parameter.name, nothing)
+          primitives.fetch(parameter.name, nothing)
         )
       }
     end
@@ -65,10 +65,16 @@ class Curryable
       @nothing ||= SweetNothing.new
     end
 
-    def check_positional_within_arity(primitives)
-      possible_keywords = primitives.drop(parameters.arity)
+    def split_primitives(primitive_list)
+      if primitive_list.length == parameters.arity + 1 && primitive_list.last.is_a?(Hash)
+        [primitive_list.take(parameters.arity), primitive_list.last]
+      else
+        [primitive_list, {}]
+      end
+    end
 
-      unless possible_keywords.empty? || possible_keywords.map(&:class) == [Hash]
+    def check_positional_within_arity(primitives)
+      unless primitives.length <= parameters.arity
         raise ArgumentError.new(
           "wrong number of arguments (#{primitives.length} for #{parameters.arity})"
         )
@@ -76,8 +82,8 @@ class Curryable
     end
 
     def check_for_unknown_keywords(primitives)
-      given_keywords = primitives.drop(parameters.arity).fetch(0, {}).keys
-      unknown_keywords = given_keywords - parameters.required_keywords.map(&:name)
+      unknown_keywords = primitives.keys - parameters.required_keywords.map(&:name)
+
       if unknown_keywords.any?
         plural = unknown_keywords.length > 1 ? "s" : ""
 
