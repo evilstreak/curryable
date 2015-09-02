@@ -27,21 +27,6 @@ class Curryable
         [Hash[keyword.select(&:fulfilled?).map { |p| [ p.name, p.value ] }]].reject(&:empty?)
     end
 
-    def extract_positional(primitives)
-      parameters.positional.map.with_index { |parameter, i|
-        PositionalArgument.new(parameter, primitives.fetch(i, nothing))
-      }
-    end
-
-    def extract_keyword(primitives)
-      parameters.required_keywords.map { |parameter|
-        KeywordArgument.new(
-          parameter,
-          primitives.fetch(parameter.name, nothing)
-        )
-      }
-    end
-
     def fulfilled?
       all?(&:fulfilled?)
     end
@@ -60,6 +45,21 @@ class Curryable
     end
 
     private
+
+    def extract_positional(primitives)
+      parameters.positional.map.with_index { |parameter, i|
+        PositionalArgument.new(parameter, primitives.fetch(i, nothing))
+      }
+    end
+
+    def extract_keyword(primitives)
+      parameters.required_keywords.map { |parameter|
+        KeywordArgument.new(
+          parameter,
+          primitives.fetch(parameter.name, nothing)
+        )
+      }
+    end
 
     def nothing
       @nothing ||= SweetNothing.new
