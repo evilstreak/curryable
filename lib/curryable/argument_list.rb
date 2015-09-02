@@ -15,7 +15,6 @@ class Curryable
     attr_reader :parameters, :keyword, :positional
     private     :parameters, :keyword, :positional
 
-    # TODO Reevaluate this. (says @bestie)
     include Enumerable
     def each(&block)
       (positional + keyword).each(&block)
