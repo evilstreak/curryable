@@ -11,16 +11,8 @@ class Curryable
   private     :command_class, :arguments
 
   def call(*new_arguments)
-    curryable = self.class.new(
-      command_class,
-      arguments + new_arguments,
-    )
-
-    if curryable.arguments_fulfilled?
-      curryable.execute
-    else
-      curryable
-    end
+    new_with_arguments(arguments + new_arguments)
+      .evaluate_if_fulfilled
   end
 
   def inspect
@@ -33,15 +25,23 @@ class Curryable
 
   protected
 
-  def arguments_fulfilled?
-    arguments.fulfilled?
-  end
-
-  def execute
-    command_class.new(*arguments.primitives).call
+  def evaluate_if_fulfilled
+    if arguments.fulfilled?
+      evaluate
+    else
+      self
+    end
   end
 
   private
+
+  def evaluate
+    command_class.new(*arguments.primitives).call
+  end
+
+  def new_with_arguments(new_arguments)
+    self.class.new(command_class, new_arguments)
+  end
 
   def parameters
     ParameterList.new(command_class.instance_method(:initialize).parameters)
