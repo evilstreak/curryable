@@ -20,10 +20,8 @@ class Curryable
       (positional + keyword).each(&block)
     end
 
-    # TODO This probably needs looking at too.
     def primitives
-      positional.select(&:fulfilled?).map(&:value) +
-        [Hash[keyword.select(&:fulfilled?).map { |p| [ p.name, p.value ] }]].reject(&:empty?)
+      positional_values + [keyword_values].reject(&:empty?)
     end
 
     def fulfilled?
@@ -44,6 +42,18 @@ class Curryable
     end
 
     private
+
+    def positional_values
+      positional.select(&:fulfilled?).map(&:value)
+    end
+
+    def keyword_values
+      Hash[
+        keyword
+          .select(&:fulfilled?)
+          .map { |argument| [ argument.name, argument.value ] }
+      ]
+    end
 
     def extract_positional(primitives)
       parameters.positional.map.with_index { |parameter, i|
