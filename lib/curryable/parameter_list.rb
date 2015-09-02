@@ -12,15 +12,15 @@ class Curryable
       list.select(&:positional?)
     end
 
-    def required_positional
-      positional.select(&:required?)
-    end
-
     def required_keywords
       list.select(&:keyword?).select(&:required?)
     end
 
     private
+
+    def required_positional
+      positional.select(&:required?)
+    end
 
     def list
       @list ||= @raw_list.map { |type, name| Parameter.new(type, name) }
