@@ -2,7 +2,6 @@ require "curryable/parameter_list"
 require "curryable/argument_list"
 
 class Curryable
-  # TODO we could pass an ArgumentList instead of a splat here
   def initialize(command_class, arguments = nil)
     @command_class = command_class
     @arguments = arguments || default_argument_list
@@ -12,16 +11,8 @@ class Curryable
   private     :command_class, :arguments
 
   def call(*new_arguments)
-    curryable = self.class.new(
-      command_class,
-      arguments + new_arguments,
-    )
-
-    if curryable.arguments_fulfilled?
-      curryable.execute
-    else
-      curryable
-    end
+    new_with_arguments(arguments + new_arguments)
+      .evaluate_if_fulfilled
   end
 
   def inspect
@@ -34,30 +25,22 @@ class Curryable
 
   protected
 
-  def arguments_fulfilled?
-    arguments.fulfilled?
-  end
-
-  def execute
-    command_class.new(*arguments.primitives).call
+  def evaluate_if_fulfilled
+    if arguments.fulfilled?
+      evaluate
+    else
+      self
+    end
   end
 
   private
 
-  def positional_parameter_names
-    positional_parameters.map(&:name)
+  def evaluate
+    command_class.new(*arguments.primitives).call
   end
 
-  def positional_parameters
-    parameters.positional
-  end
-
-  def required_keywords
-    parameters.required_keywords.map(&:name)
-  end
-
-  def arity
-    parameters.arity
+  def new_with_arguments(new_arguments)
+    self.class.new(command_class, new_arguments)
   end
 
   def parameters
