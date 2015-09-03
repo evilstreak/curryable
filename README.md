@@ -46,3 +46,14 @@ signup_service.call(
   attributes: user_attrs,
 )
 ```
+
+## TODO
+
+* Contributing guide
+* List of features we would actively encourage
+* Code of conduct
+* Github badges
+* Travis
+* Code climate
+* Define supported Ruby versions and implementations
+* Test against all of them
