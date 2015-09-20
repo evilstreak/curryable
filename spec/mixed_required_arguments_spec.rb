@@ -2,18 +2,20 @@ require "spec_helper"
 require "curryable"
 
 RSpec.describe "Mixed required arguments" do
-  module Curryable::TestClasses
-    class MixedRequiredCommandClass
-      def initialize(a, b, c:, d:)
-        @a = a
-        @b = b
-        @c = c
-        @d = d
-      end
 
-      def call
-        $command_spy.call(a: @a, b: @b, c: @c, d: @d)
-      end
+  command_spy = nil
+
+  Curryable::TestClasses ||= Module.new
+  Curryable::TestClasses::MixedRequiredCommandClass = Class.new do
+    define_method(:initialize) do |a, b, c:, d:|
+      @a = a
+      @b = b
+      @c = c
+      @d = d
+    end
+
+    define_method(:call) do
+      command_spy.call(a: @a, b: @b, c: @c, d: @d)
     end
   end
 
@@ -21,7 +23,6 @@ RSpec.describe "Mixed required arguments" do
   let(:b) { double(:b) }
   let(:c) { double(:c) }
   let(:d) { double(:d) }
-  let(:command_spy) { spy }
 
   subject(:curryable) {
     Curryable.new(Curryable::TestClasses::MixedRequiredCommandClass)
@@ -30,7 +31,7 @@ RSpec.describe "Mixed required arguments" do
   let(:return_value) { double(:return_value) }
 
   before do
-    $command_spy = command_spy
+    command_spy = spy
 
     allow(command_spy).to receive(:call).and_return(return_value)
   end
