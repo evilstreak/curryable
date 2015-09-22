@@ -2,24 +2,25 @@ require "spec_helper"
 require "curryable"
 
 RSpec.describe "Required positional arguments" do
-  module Curryable::TestClasses
-    class RequiredPositionalCommandClass
-      def initialize(a, b, c)
-        @a = a
-        @b = b
-        @c = c
-      end
 
-      def call
-        $command_spy.call(a: @a, b: @b, c: @c)
-      end
+  command_spy = nil
+
+  Curryable::TestClasses ||= Module.new
+  Curryable::TestClasses::RequiredPositionalCommandClass = Class.new do
+    define_method(:initialize) do |a, b, c|
+      @a = a
+      @b = b
+      @c = c
+    end
+
+    define_method(:call) do
+      command_spy.call(a: @a, b: @b, c: @c)
     end
   end
 
   let(:a) { double(:a) }
   let(:b) { double(:b) }
   let(:c) { double(:c) }
-  let(:command_spy) { spy }
 
   subject(:curryable) {
     Curryable.new(Curryable::TestClasses::RequiredPositionalCommandClass)
@@ -28,7 +29,7 @@ RSpec.describe "Required positional arguments" do
   let(:return_value) { double(:return_value) }
 
   before do
-    $command_spy = command_spy
+    command_spy = spy
 
     allow(command_spy).to receive(:call).and_return(return_value)
   end
